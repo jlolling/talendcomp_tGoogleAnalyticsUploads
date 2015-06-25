@@ -1,0 +1,51 @@
+<%@ jet 
+	imports="
+		org.talend.core.model.process.INode 
+		org.talend.core.model.process.ElementParameterParser 
+		org.talend.core.model.process.IConnection
+		org.talend.core.model.process.IConnectionCategory
+		org.talend.designer.codegen.config.CodeGeneratorArgument
+		java.util.List
+	" 
+%>
+<% 
+    CodeGeneratorArgument codeGenArgument = (CodeGeneratorArgument) argument;
+    INode node = (INode)codeGenArgument.getArgument();
+    String cid = node.getUniqueName(); 
+    String customDatasourceRowName = null;
+    List<? extends IConnection> connsCustomDatasources = node.getOutgoingConnections("CUSTOM_DATA_SOURCES");
+    if (connsCustomDatasources != null && connsCustomDatasources.size() > 0) {
+    	IConnection connTemp = connsCustomDatasources.get(0);
+    	if (connTemp.getLineStyle().hasConnectionCategory(IConnectionCategory.DATA)) {
+    		customDatasourceRowName = connTemp.getName();
+    	}
+    }
+    String uploadsRowName = null;
+    List<? extends IConnection> connsUploads = node.getOutgoingConnections("UPLOADS");
+    if (connsUploads != null && connsUploads.size() > 0) {
+    	IConnection connTemp = connsUploads.get(0);
+    	if (connTemp.getLineStyle().hasConnectionCategory(IConnectionCategory.DATA)) {
+    		uploadsRowName = connTemp.getName();
+    	}
+    }
+    String currentUploadRowName = null;
+    List<? extends IConnection> connsCurrentUpload = node.getOutgoingConnections("CURRENT_UPLOAD");
+    if (connsCurrentUpload != null && connsCurrentUpload.size() > 0) {
+    	IConnection connTemp = connsCurrentUpload.get(0);
+    	if (connTemp.getLineStyle().hasConnectionCategory(IConnectionCategory.DATA)) {
+    		currentUploadRowName = connTemp.getName();
+    	}
+    }
+    %>
+<%  if (currentUploadRowName != null) { %>
+	} // end if (upload != null)
+<%  } %>
+<%  if (uploadsRowName != null) { %>
+	} // end while for uploads
+	globalMap.put("<%=cid%>_UPLOADS_NB_LINE", countUploads_<%=cid%>);
+<%  } %>
+<%  if (customDatasourceRowName != null) { %>
+	} // end while for custom data sources
+	globalMap.put("<%=cid%>_CUSTOM_DATA_SOURCES_NB_LINE", countCustomDataSources_<%=cid%>);
+<%  } %>
+

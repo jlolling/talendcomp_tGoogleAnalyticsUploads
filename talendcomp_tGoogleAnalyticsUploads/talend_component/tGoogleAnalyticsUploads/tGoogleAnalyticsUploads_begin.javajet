@@ -1,0 +1,204 @@
+<%@ jet 
+	imports="
+		org.talend.core.model.process.INode 
+		org.talend.core.model.process.ElementParameterParser 
+		org.talend.core.model.process.IConnection
+		org.talend.core.model.process.IConnectionCategory
+		org.talend.designer.codegen.config.CodeGeneratorArgument
+		java.util.List
+	" 
+%>
+<%
+    CodeGeneratorArgument codeGenArgument = (CodeGeneratorArgument) argument;
+    INode node = (INode) codeGenArgument.getArgument();
+    String cid = node.getUniqueName();
+	String mode = ElementParameterParser.getValue(node, "__MODE__");
+    String applicationName = ElementParameterParser.getValue(node, "__APPLICATION_NAME__");
+    boolean useServiceAccount = "SERVICE_ACCOUNT".equals(ElementParameterParser.getValue(node, "__AUTHENTICATION_METHOD__"));
+    String clientSecretFile = ElementParameterParser.getValue(node, "__CLIENT_SECRET_FILE__");
+    String userEmail = ElementParameterParser.getValue(node, "__USER_ACCOUNT_EMAIL__");
+	String accountEmail = ElementParameterParser.getValue(node, "__SERVICE_ACCOUNT_EMAIL__");
+	String keyFile = ElementParameterParser.getValue(node, "__KEY_FILE__");
+	String timeout = ElementParameterParser.getValue(node, "__TIMEOUT_IN_SEC__");
+	String timeOffset = ElementParameterParser.getValue(node, "__TIME_OFFSET__");
+	String keepClient = ElementParameterParser.getValue(node, "__KEEP_CLIENT__");
+	String keepClientName = ElementParameterParser.getValue(node, "__KEEP_CLIENT_KEY__");
+	if (keepClientName == null || keepClientName.trim().isEmpty()) {
+		keepClientName = "\"--\"";
+	}
+	String maxAttempts = ElementParameterParser.getValue(node, "__MAX_ATTEMPTS__");
+	String innerLoopWaitTime = ElementParameterParser.getValue(node, "__WAIT_TIME_BETWEEN_REQUESTS__");
+	String accountId = ElementParameterParser.getValue(node, "__ACCOUNT_ID__");
+	if (accountId == null || accountId.trim().isEmpty()) {
+		accountId = "null";
+	}
+	String webpropertyId = ElementParameterParser.getValue(node, "__WEBPROPERTY_ID__");
+	if (webpropertyId == null || webpropertyId.trim().isEmpty()) {
+		webpropertyId = "null";
+	}
+	String customDataSourceId = ElementParameterParser.getValue(node, "__CUSTOM_DATA_SOURCE_ID__");
+	if (customDataSourceId == null || customDataSourceId.trim().isEmpty()) {
+		customDataSourceId = "null";
+	}
+	String uploadFile = ElementParameterParser.getValue(node, "__UPLOAD_FILE__");
+	if (uploadFile == null || uploadFile.trim().isEmpty()) {
+		uploadFile = "null";
+	}
+    String customDatasourceRowName = null;
+    List<? extends IConnection> connsCustomDatasources = node.getOutgoingConnections("CUSTOM_DATA_SOURCES");
+    if (connsCustomDatasources != null && connsCustomDatasources.size() > 0) {
+    	IConnection connTemp = connsCustomDatasources.get(0);
+    	if (connTemp.getLineStyle().hasConnectionCategory(IConnectionCategory.DATA)) {
+    		customDatasourceRowName = connTemp.getName();
+    	}
+    }
+    String uploadsRowName = null;
+    List<? extends IConnection> connsUploads = node.getOutgoingConnections("UPLOADS");
+    if (connsUploads != null && connsUploads.size() > 0) {
+    	IConnection connTemp = connsUploads.get(0);
+    	if (connTemp.getLineStyle().hasConnectionCategory(IConnectionCategory.DATA)) {
+    		uploadsRowName = connTemp.getName();
+    	}
+    }
+    String currentUploadRowName = null;
+    List<? extends IConnection> connsCurrentUpload = node.getOutgoingConnections("CURRENT_UPLOAD");
+    if (connsCurrentUpload != null && connsCurrentUpload.size() > 0) {
+    	IConnection connTemp = connsCurrentUpload.get(0);
+    	if (connTemp.getLineStyle().hasConnectionCategory(IConnectionCategory.DATA)) {
+    		currentUploadRowName = connTemp.getName();
+    	}
+    }
+    String distinctName = null;
+    if (useServiceAccount) {
+    	distinctName = accountEmail;
+    } else {
+    	distinctName = userEmail;
+    }
+%>
+    // start creating client
+<% if ("true".equals(keepClient)) { %>
+	de.jlo.talendcomp.google.gauploads.UploadHelper <%=cid%> = de.jlo.talendcomp.google.gauploads.UploadHelper.getFromCache(<%=distinctName%> + <%=keepClientName%> + "<%=cid%>" + jobName);
+	if (<%=cid%> == null) {
+		<%=cid%> = new de.jlo.talendcomp.google.gauploads.UploadHelper();
+<% } else { %>
+	    de.jlo.talendcomp.google.gauploads.UploadHelper <%=cid%> = new de.jlo.talendcomp.google.gauploads.UploadHelper();
+<% } %>
+<% if (applicationName != null && applicationName.trim().isEmpty() == false) { %>
+	    <%=cid%>.setApplicationName(<%=applicationName%>);
+<% } %>
+        // setup credentials
+      <%=cid%>.setUseServiceAccount(<%=useServiceAccount%>);
+<% if (useServiceAccount) { %>
+        // setup credentials with service account
+		<%=cid%>.setAccountEmail(<%=accountEmail%>);
+		<%=cid%>.setKeyFile(<%=keyFile%>);
+<% } else { %>
+		<%=cid%>.setAccountEmail(<%=userEmail%>);
+		<%=cid%>.setClientSecretFile(<%=clientSecretFile%>);
+<% } %> 
+<% if (timeout != null && timeout.trim().isEmpty() == false) { %>
+	    <%=cid%>.setTimeoutInSeconds(<%=timeout%>);
+<% } %>
+<% if (timeOffset != null && timeOffset.trim().isEmpty() == false) { %>
+	    <%=cid%>.setTimeOffsetMillisToPast(<%=timeOffset%>);
+<% } %>
+<% if (innerLoopWaitTime != null && innerLoopWaitTime.trim().isEmpty() == false) { %>
+		<%=cid%>.setInnerLoopWaitInterval(<%=innerLoopWaitTime%>);
+<% } %>
+<% if (maxAttempts != null && maxAttempts.trim().isEmpty() == false) { %>
+    	<%=cid%>.setMaxRetriesInCaseOfErrors(<%=maxAttempts%>);
+<% } %>
+	    try {
+	        // initialize client with private key
+	        System.out.println("Initialise client...");
+		    <%=cid%>.initializeAnalyticsClient();
+	    } catch (Exception e) {
+		    globalMap.put("<%=cid%>_ERROR_MESSAGE", e.getMessage());
+		    throw e;
+	    }
+	    globalMap.put("<%=cid%>", <%=cid%>);
+<% if ("true".equals(keepClient)) { %>
+	    de.jlo.talendcomp.google.gauploads.UploadHelper.putIntoCache(<%=accountEmail%> + <%=keepClientName%> + "<%=cid%>" + jobName, <%=cid%>);
+	} // end if (<%=cid%> == null) {
+<% } %>
+    <%=cid%>.setAccountId(<%=accountId%>);
+    <%=cid%>.setWebPropertyId(<%=webpropertyId%>);
+    <%=cid%>.setCustomDataSourceId(<%=customDataSourceId%>);
+<% if ("UPLOAD".equals(mode)) { %>
+	// upload a file
+	com.google.api.services.analytics.model.Upload upload_<%=cid%> = null;
+	String file_<%=cid%> = <%=uploadFile%>;
+	try {
+		globalMap.remove("<%=cid%>_UPLOAD_FILEPATH");
+		upload_<%=cid%> = <%=cid%>.startUpload(file_<%=cid%>);
+		globalMap.put("<%=cid%>_UPLOAD_FILEPATH", file_<%=cid%>);
+	} catch (Exception e) {
+		globalMap.put("<%=cid%>_ERROR_MESSAGE", "Upload file: " + file_<%=cid%> + " failed:" + e.getMessage());
+		throw e;
+	}
+<%   if (currentUploadRowName != null) { %>
+	if (upload_<%=cid%> != null) {
+		<%=currentUploadRowName%> = new <%=currentUploadRowName%>Struct();
+	    <%=currentUploadRowName%>.UPLOAD_ID = upload_<%=cid%>.getId();
+		<%=currentUploadRowName%>.UPLOAD_STATUS = upload_<%=cid%>.getStatus();
+		<%=currentUploadRowName%>.ACCOUNT_ID = upload_<%=cid%>.getAccountId();
+		<%=currentUploadRowName%>.UPLOAD_ERRORS = de.jlo.talendcomp.google.gauploads.UploadHelper.buildChain(upload_<%=cid%>.getErrors(),"|");
+		<%=currentUploadRowName%>.CDS_ID = upload_<%=cid%>.getCustomDataSourceId();
+		<%=currentUploadRowName%>.LOCAL_FILEPATH = file_<%=cid%>;
+<%   } %>
+<% } else if ("LIST_UPLOADS".equals(mode)) { %>
+	// list uploads for the custom data source id
+    <%=cid%>.reset();
+	try {
+		<%=cid%>.collectUploads();
+	} catch (Exception e) {
+		globalMap.put("<%=cid%>_ERROR_MESSAGE", "Collect uploads failed:" + e.getMessage());
+		throw e;
+	}
+<%   if (uploadsRowName != null) { %>
+    int countUploads_<%=cid%> = 0;
+	while (<%=cid%>.next()) {
+		if (<%=cid%>.hasCurrentUpload()) {
+			<%=uploadsRowName%> = new <%=uploadsRowName%>Struct();
+		    com.google.api.services.analytics.model.Upload upload = <%=cid%>.getCurrentUpload();
+	        <%=uploadsRowName%>.UPLOAD_ID = upload.getId();
+		    <%=uploadsRowName%>.UPLOAD_STATUS = upload.getStatus();
+		    <%=uploadsRowName%>.ACCOUNT_ID = upload.getAccountId();
+		    <%=uploadsRowName%>.UPLOAD_ERRORS = de.jlo.talendcomp.google.gauploads.UploadHelper.buildChain(upload.getErrors(),"|");
+		    <%=uploadsRowName%>.CDS_ID = upload.getCustomDataSourceId();
+		    countUploads_<%=cid%>++;
+		 } else {
+		 	<%=uploadsRowName%> = null;
+		 }
+<%   } %>
+<% } else if ("LIST_CUSTOM_DATA_SOURCES".equals(mode)) { %>
+	// list custom data sources for the account and web property
+	// list uploads for the custom data source id
+    <%=cid%>.reset();
+	try {
+		<%=cid%>.collectCustomDataSources();
+	} catch (Exception e) {
+		globalMap.put("<%=cid%>_ERROR_MESSAGE", "Collect custom data sources failed:" + e.getMessage());
+		throw e;
+	}
+<%   if (customDatasourceRowName != null) { %>
+    int countCustomDataSources_<%=cid%> = 0;
+	while (<%=cid%>.next()) {
+		if (<%=cid%>.hasCurrentCustomDataSource()) {
+		    <%=customDatasourceRowName%> = new <%=customDatasourceRowName%>Struct();
+		    com.google.api.services.analytics.model.CustomDataSource ds = <%=cid%>.getCurrentCustomDataSource();
+		    <%=customDatasourceRowName%>.CDS_ID = ds.getId();
+		    <%=customDatasourceRowName%>.ACCOUNT_ID = Long.parseLong(ds.getAccountId());
+		    <%=customDatasourceRowName%>.WEBPROPERTY_ID = ds.getWebPropertyId();
+		    <%=customDatasourceRowName%>.CDS_NAME = ds.getName();
+		    <%=customDatasourceRowName%>.CDS_TYPE = ds.getType();
+		    <%=customDatasourceRowName%>.CDS_IMPORT_BEHAVIOR = ds.getImportBehavior();
+		    <%=customDatasourceRowName%>.CDS_LINKED_PROFILES = de.jlo.talendcomp.google.gauploads.UploadHelper.buildChain(ds.getProfilesLinked(),",");
+		    <%=customDatasourceRowName%>.CDS_CREATED = ds.getCreated() != null ? new java.util.Date(ds.getCreated().getValue()) : null;
+		    <%=customDatasourceRowName%>.CDS_UPDATED = ds.getUpdated() != null ? new java.util.Date(ds.getUpdated().getValue()) : null;
+			countCustomDataSources_<%=cid%>++;
+		} else {
+			<%=customDatasourceRowName%> = null;
+		}
+<%   } %>     
+<% } %>
