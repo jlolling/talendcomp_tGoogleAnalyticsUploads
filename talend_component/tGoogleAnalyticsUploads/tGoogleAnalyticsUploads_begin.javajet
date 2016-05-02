@@ -77,11 +77,11 @@
 %>
     // start creating client
 <% if ("true".equals(keepClient)) { %>
-	de.jlo.talendcomp.google.gauploads.UploadHelper <%=cid%> = de.jlo.talendcomp.google.gauploads.UploadHelper.getFromCache(<%=distinctName%> + <%=keepClientName%> + "<%=cid%>" + jobName);
+	de.jlo.talendcomp.google.analytics.uploads.UploadHelper <%=cid%> = de.jlo.talendcomp.google.analytics.uploads.UploadHelper.getFromCache(<%=distinctName%> + <%=keepClientName%> + "<%=cid%>" + jobName);
 	if (<%=cid%> == null) {
-		<%=cid%> = new de.jlo.talendcomp.google.gauploads.UploadHelper();
+		<%=cid%> = new de.jlo.talendcomp.google.analytics.uploads.UploadHelper();
 <% } else { %>
-	    de.jlo.talendcomp.google.gauploads.UploadHelper <%=cid%> = new de.jlo.talendcomp.google.gauploads.UploadHelper();
+	    de.jlo.talendcomp.google.analytics.uploads.UploadHelper <%=cid%> = new de.jlo.talendcomp.google.analytics.uploads.UploadHelper();
 <% } %>
 <% if (applicationName != null && applicationName.trim().isEmpty() == false) { %>
 	    <%=cid%>.setApplicationName(<%=applicationName%>);
@@ -118,7 +118,7 @@
 	    }
 	    globalMap.put("<%=cid%>", <%=cid%>);
 <% if ("true".equals(keepClient)) { %>
-	    de.jlo.talendcomp.google.gauploads.UploadHelper.putIntoCache(<%=accountEmail%> + <%=keepClientName%> + "<%=cid%>" + jobName, <%=cid%>);
+	    de.jlo.talendcomp.google.analytics.uploads.UploadHelper.putIntoCache(<%=accountEmail%> + <%=keepClientName%> + "<%=cid%>" + jobName, <%=cid%>);
 	} // end if (<%=cid%> == null) {
 <% } %>
     <%=cid%>.setAccountId(<%=accountId%>);
@@ -142,7 +142,7 @@
 	    <%=currentUploadRowName%>.UPLOAD_ID = upload_<%=cid%>.getId();
 		<%=currentUploadRowName%>.UPLOAD_STATUS = upload_<%=cid%>.getStatus();
 		<%=currentUploadRowName%>.ACCOUNT_ID = upload_<%=cid%>.getAccountId();
-		<%=currentUploadRowName%>.UPLOAD_ERRORS = de.jlo.talendcomp.google.gauploads.UploadHelper.buildChain(upload_<%=cid%>.getErrors(),"|");
+		<%=currentUploadRowName%>.UPLOAD_ERRORS = de.jlo.talendcomp.google.analytics.uploads.UploadHelper.buildChain(upload_<%=cid%>.getErrors(),"|");
 		<%=currentUploadRowName%>.CDS_ID = upload_<%=cid%>.getCustomDataSourceId();
 		<%=currentUploadRowName%>.LOCAL_FILEPATH = file_<%=cid%>;
 <%   } %>
@@ -164,7 +164,7 @@
 	        <%=uploadsRowName%>.UPLOAD_ID = upload.getId();
 		    <%=uploadsRowName%>.UPLOAD_STATUS = upload.getStatus();
 		    <%=uploadsRowName%>.ACCOUNT_ID = upload.getAccountId();
-		    <%=uploadsRowName%>.UPLOAD_ERRORS = de.jlo.talendcomp.google.gauploads.UploadHelper.buildChain(upload.getErrors(),"|");
+		    <%=uploadsRowName%>.UPLOAD_ERRORS = de.jlo.talendcomp.google.analytics.uploads.UploadHelper.buildChain(upload.getErrors(),"|");
 		    <%=uploadsRowName%>.CDS_ID = upload.getCustomDataSourceId();
 		    countUploads_<%=cid%>++;
 		 } else {
@@ -193,7 +193,7 @@
 		    <%=customDatasourceRowName%>.CDS_NAME = ds.getName();
 		    <%=customDatasourceRowName%>.CDS_TYPE = ds.getType();
 		    <%=customDatasourceRowName%>.CDS_IMPORT_BEHAVIOR = ds.getImportBehavior();
-		    <%=customDatasourceRowName%>.CDS_LINKED_PROFILES = de.jlo.talendcomp.google.gauploads.UploadHelper.buildChain(ds.getProfilesLinked(),",");
+		    <%=customDatasourceRowName%>.CDS_LINKED_PROFILES = de.jlo.talendcomp.google.analytics.uploads.UploadHelper.buildChain(ds.getProfilesLinked(),",");
 		    <%=customDatasourceRowName%>.CDS_CREATED = ds.getCreated() != null ? new java.util.Date(ds.getCreated().getValue()) : null;
 		    <%=customDatasourceRowName%>.CDS_UPDATED = ds.getUpdated() != null ? new java.util.Date(ds.getUpdated().getValue()) : null;
 			countCustomDataSources_<%=cid%>++;
